@@ -34,5 +34,41 @@ export const chainRequestSchema = z.object({
   toolChoice: z.unknown().optional(),
 });
 
+export const a2aSendMessageSchema = z
+  .object({
+    message: z
+      .object({
+        messageId: z.string().min(1).optional(),
+        role: z.string().optional(),
+        parts: z.array(z.unknown()).min(1),
+        contextId: z.string().min(1).optional(),
+        taskId: z.string().min(1).optional(),
+        metadata: z.record(z.string(), z.unknown()).optional(),
+      })
+      .passthrough(),
+    configuration: z
+      .object({
+        blocking: z.boolean().optional(),
+        acceptedOutputModes: z.array(z.string().min(1)).optional(),
+        historyLength: z.coerce.number().int().nonnegative().optional(),
+      })
+      .passthrough()
+      .optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+    contextId: z.string().min(1).optional(),
+    taskId: z.string().min(1).optional(),
+  })
+  .passthrough();
+
+export const a2aTaskIdParamSchema = z.object({
+  id: z.string().min(1),
+});
+
+export const a2aListTasksQuerySchema = z.object({
+  contextId: z.string().min(1).optional(),
+  pageSize: z.coerce.number().int().positive().max(100).default(20),
+});
+
 export type ChatRequestInput = z.infer<typeof chatRequestSchema>;
 export type ChainRequestInput = z.infer<typeof chainRequestSchema>;
+export type A2aSendMessageInput = z.infer<typeof a2aSendMessageSchema>;

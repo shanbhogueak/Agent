@@ -204,6 +204,18 @@ For Apify specifically, you can also set `APIFY_MCP_TOKEN` in `.env` and the ser
 - `GET /v1/memory`
 - `POST /webhooks/openai`
 
+### A2A Adapter Endpoints
+
+- `GET /.well-known/agent-card.json`
+- `GET /.well-known/agent-card`
+- `GET /extendedAgentCard`
+- `POST /message:send`
+- `POST /message:stream`
+- `GET /tasks/:id`
+- `GET /tasks`
+- `POST /tasks/:id:cancel`
+- `POST /tasks/:id:subscribe`
+
 ## Troubleshooting
 
 If Streamlit cannot connect:
