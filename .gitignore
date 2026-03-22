@@ -1,0 +1,16 @@
+# Node
+node_modules/
+dist/
+
+# Python
+.venv-ui/
+__pycache__/
+*.py[cod]
+
+# Local env/state
+.env
+.env.local
+memory.store.jsonl
+
+# OS/editor
+.DS_Store
