@@ -31,6 +31,9 @@ app.get("/v1/mcp/servers", (_req, res) => {
       transport: server.transport ?? "unspecified",
       timeoutSeconds: server.timeoutSeconds ?? null,
       requireApproval: server.requireApproval ?? "always",
+      hasAuthorization: Boolean(server.authorization || (server.label.toLowerCase() === "apify" && appConfig.apifyMcpToken)),
+      headerKeys: Object.keys(server.headers ?? {}),
+      allowedTools: server.allowedTools ?? [],
     })),
     skipped: appConfig.mcpSkippedServers,
   });
@@ -140,14 +143,34 @@ app.post("/v1/chat", async (req, res) => {
       ? sessionToLastResponseId.get(payload.sessionId)
       : undefined;
 
-    const response = await openai.responses.create({
-      model: appConfig.openaiModel,
-      input,
-      tools,
-      metadata: payload.metadata,
-      tool_choice: payload.toolChoice as any,
-      previous_response_id: previousResponseId,
-    } as any);
+    let usedMcpFallback = false;
+    let response;
+    try {
+      response = await openai.responses.create({
+        model: appConfig.openaiModel,
+        input,
+        tools,
+        metadata: payload.metadata,
+        tool_choice: payload.toolChoice as any,
+        previous_response_id: previousResponseId,
+      } as any);
+    } catch (error) {
+      const fallbackTools = stripMcpTools(tools);
+      if (shouldRetryWithoutMcp(error, tools) && fallbackTools.length < tools.length) {
+        usedMcpFallback = true;
+        console.warn("Retrying /v1/chat without MCP tools due to MCP authorization failure.");
+        response = await openai.responses.create({
+          model: appConfig.openaiModel,
+          input,
+          tools: fallbackTools,
+          metadata: payload.metadata,
+          tool_choice: payload.toolChoice as any,
+          previous_response_id: previousResponseId,
+        } as any);
+      } else {
+        throw error;
+      }
+    }
 
     if (payload.sessionId && response.id) {
       sessionToLastResponseId.set(payload.sessionId, response.id);
@@ -158,6 +181,7 @@ app.post("/v1/chat", async (req, res) => {
       outputText: extractOutputText(response),
       status: response.status,
       previousResponseId,
+      warnings: usedMcpFallback ? [MCP_FALLBACK_WARNING] : [],
     });
   } catch (error) {
     handleError(res, error);
@@ -179,41 +203,64 @@ app.post("/v1/chat/stream", async (req, res) => {
       ? sessionToLastResponseId.get(payload.sessionId)
       : undefined;
 
-    const stream = openai.responses.stream({
-      model: appConfig.openaiModel,
-      input,
-      tools,
-      metadata: payload.metadata,
-      tool_choice: payload.toolChoice as any,
-      previous_response_id: previousResponseId,
-    } as any);
+    let activeTools = tools;
+    let usedMcpFallback = false;
 
-    for await (const event of stream) {
-      if (event?.type === "response.output_text.delta" && typeof event?.delta === "string") {
-        res.write(`data: ${JSON.stringify({ type: "delta", delta: event.delta })}\n\n`);
-      }
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const stream = openai.responses.stream({
+          model: appConfig.openaiModel,
+          input,
+          tools: activeTools,
+          metadata: payload.metadata,
+          tool_choice: payload.toolChoice as any,
+          previous_response_id: previousResponseId,
+        } as any);
 
-      if (event?.type === "error") {
+        if (usedMcpFallback) {
+          res.write(
+            `data: ${JSON.stringify({ type: "warning", warning: MCP_FALLBACK_WARNING })}\n\n`,
+          );
+        }
+
+        for await (const event of stream) {
+          if (event?.type === "response.output_text.delta" && typeof event?.delta === "string") {
+            res.write(`data: ${JSON.stringify({ type: "delta", delta: event.delta })}\n\n`);
+          }
+
+          if (event?.type === "error") {
+            res.write(
+              `data: ${JSON.stringify({ type: "error", error: event?.message ?? "Unknown stream error" })}\n\n`,
+            );
+          }
+        }
+
+        const finalResponse = await stream.finalResponse();
+
+        if (payload.sessionId && finalResponse?.id) {
+          sessionToLastResponseId.set(payload.sessionId, finalResponse.id);
+        }
+
         res.write(
-          `data: ${JSON.stringify({ type: "error", error: event?.message ?? "Unknown stream error" })}\n\n`,
+          `data: ${JSON.stringify({
+            type: "done",
+            responseId: finalResponse?.id,
+            outputText: extractOutputText(finalResponse),
+          })}\n\n`,
         );
+        res.end();
+        return;
+      } catch (error) {
+        const fallbackTools = stripMcpTools(activeTools);
+        if (attempt === 0 && shouldRetryWithoutMcp(error, activeTools) && fallbackTools.length < activeTools.length) {
+          usedMcpFallback = true;
+          activeTools = fallbackTools;
+          console.warn("Retrying /v1/chat/stream without MCP tools due to MCP authorization failure.");
+          continue;
+        }
+        throw error;
       }
     }
-
-    const finalResponse = await stream.finalResponse();
-
-    if (payload.sessionId && finalResponse?.id) {
-      sessionToLastResponseId.set(payload.sessionId, finalResponse.id);
-    }
-
-    res.write(
-      `data: ${JSON.stringify({
-        type: "done",
-        responseId: finalResponse?.id,
-        outputText: extractOutputText(finalResponse),
-      })}\n\n`,
-    );
-    res.end();
   } catch (error) {
     res.write(`data: ${JSON.stringify({ type: "error", error: getErrorMessage(error) })}\n\n`);
     res.end();
@@ -231,15 +278,36 @@ app.post("/v1/chat/async", async (req, res) => {
       ? sessionToLastResponseId.get(payload.sessionId)
       : undefined;
 
-    const response = await openai.responses.create({
-      model: appConfig.openaiModel,
-      input,
-      tools,
-      background: true,
-      metadata: payload.metadata,
-      tool_choice: payload.toolChoice as any,
-      previous_response_id: previousResponseId,
-    } as any);
+    let usedMcpFallback = false;
+    let response;
+    try {
+      response = await openai.responses.create({
+        model: appConfig.openaiModel,
+        input,
+        tools,
+        background: true,
+        metadata: payload.metadata,
+        tool_choice: payload.toolChoice as any,
+        previous_response_id: previousResponseId,
+      } as any);
+    } catch (error) {
+      const fallbackTools = stripMcpTools(tools);
+      if (shouldRetryWithoutMcp(error, tools) && fallbackTools.length < tools.length) {
+        usedMcpFallback = true;
+        console.warn("Retrying /v1/chat/async without MCP tools due to MCP authorization failure.");
+        response = await openai.responses.create({
+          model: appConfig.openaiModel,
+          input,
+          tools: fallbackTools,
+          background: true,
+          metadata: payload.metadata,
+          tool_choice: payload.toolChoice as any,
+          previous_response_id: previousResponseId,
+        } as any);
+      } else {
+        throw error;
+      }
+    }
 
     if (payload.sessionId && response.id) {
       sessionToLastResponseId.set(payload.sessionId, response.id);
@@ -249,6 +317,7 @@ app.post("/v1/chat/async", async (req, res) => {
       responseId: response.id,
       status: response.status,
       previousResponseId,
+      warnings: usedMcpFallback ? [MCP_FALLBACK_WARNING] : [],
     });
   } catch (error) {
     handleError(res, error);
@@ -259,22 +328,50 @@ app.post("/v1/chat/chain", async (req, res) => {
   try {
     const payload = chainRequestSchema.parse(req.body);
     const tools = buildTools();
+    let usedMcpFallback = false;
+    let result;
 
-    const result = await executeSkillChain(payload, {
-      client: openai,
-      model: appConfig.openaiModel,
-      tools,
-      composeInput,
-      getContextOptions: async ({ sessionId, userId, skillNames }) =>
-        buildComposeOptions({ sessionId, userId, skillNames }),
-      getPreviousResponseId: (sessionId) =>
-        sessionId ? sessionToLastResponseId.get(sessionId) : undefined,
-      setPreviousResponseId: (sessionId, responseId) => {
-        sessionToLastResponseId.set(sessionId, responseId);
-      },
+    try {
+      result = await executeSkillChain(payload, {
+        client: openai,
+        model: appConfig.openaiModel,
+        tools,
+        composeInput,
+        getContextOptions: async ({ sessionId, userId, skillNames }) =>
+          buildComposeOptions({ sessionId, userId, skillNames }),
+        getPreviousResponseId: (sessionId) =>
+          sessionId ? sessionToLastResponseId.get(sessionId) : undefined,
+        setPreviousResponseId: (sessionId, responseId) => {
+          sessionToLastResponseId.set(sessionId, responseId);
+        },
+      });
+    } catch (error) {
+      const fallbackTools = stripMcpTools(tools);
+      if (shouldRetryWithoutMcp(error, tools) && fallbackTools.length < tools.length) {
+        usedMcpFallback = true;
+        console.warn("Retrying /v1/chat/chain without MCP tools due to MCP authorization failure.");
+        result = await executeSkillChain(payload, {
+          client: openai,
+          model: appConfig.openaiModel,
+          tools: fallbackTools,
+          composeInput,
+          getContextOptions: async ({ sessionId, userId, skillNames }) =>
+            buildComposeOptions({ sessionId, userId, skillNames }),
+          getPreviousResponseId: (sessionId) =>
+            sessionId ? sessionToLastResponseId.get(sessionId) : undefined,
+          setPreviousResponseId: (sessionId, responseId) => {
+            sessionToLastResponseId.set(sessionId, responseId);
+          },
+        });
+      } else {
+        throw error;
+      }
+    }
+
+    res.status(200).json({
+      ...result,
+      warnings: usedMcpFallback ? [MCP_FALLBACK_WARNING] : [],
     });
-
-    res.status(200).json(result);
   } catch (error) {
     handleError(res, error);
   }
@@ -342,6 +439,63 @@ async function buildComposeOptions(payload: {
     memoryFileContext: contextFiles.memoryFileContext,
     runtimeMemoryContext: formatRuntimeMemory(memoryEntries),
   };
+}
+
+const MCP_FALLBACK_WARNING =
+  "One or more MCP servers were unavailable for this request. Retried without MCP tools. Check MCP credentials and /v1/mcp/servers.";
+
+function stripMcpTools(tools: unknown[]): unknown[] {
+  return tools.filter((tool) => !isMcpTool(tool));
+}
+
+function shouldRetryWithoutMcp(error: unknown, tools: unknown[]): boolean {
+  return hasMcpTools(tools) && isMcpAuthorizationError(error);
+}
+
+function hasMcpTools(tools: unknown[]): boolean {
+  return tools.some((tool) => isMcpTool(tool));
+}
+
+function isMcpTool(tool: unknown): boolean {
+  return typeof tool === "object" && tool !== null && (tool as { type?: unknown }).type === "mcp";
+}
+
+function isMcpAuthorizationError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const asAny = error as {
+    status?: unknown;
+    message?: unknown;
+    error?: { message?: unknown; type?: unknown; code?: unknown };
+    code?: unknown;
+    type?: unknown;
+  };
+  const status = typeof asAny.status === "number" ? asAny.status : undefined;
+  const message = [
+    typeof asAny.message === "string" ? asAny.message : "",
+    typeof asAny.error?.message === "string" ? asAny.error.message : "",
+  ]
+    .join(" ")
+    .toLowerCase();
+  const errorCode = typeof asAny.code === "string" ? asAny.code.toLowerCase() : "";
+  const nestedCode = typeof asAny.error?.code === "string" ? asAny.error.code.toLowerCase() : "";
+  const errorType = typeof asAny.type === "string" ? asAny.type.toLowerCase() : "";
+  const nestedType = typeof asAny.error?.type === "string" ? asAny.error.type.toLowerCase() : "";
+
+  const mentionsMcp = message.includes("mcp");
+  const authFailure =
+    message.includes("unauthorized") ||
+    message.includes("http status code: 401") ||
+    message.includes("http status code: 403");
+  const connectorError =
+    errorCode === "http_error" ||
+    nestedCode === "http_error" ||
+    errorType === "external_connector_error" ||
+    nestedType === "external_connector_error";
+
+  return mentionsMcp && (authFailure || connectorError || status === 401 || status === 403 || status === 424);
 }
 
 function handleError(res: express.Response, error: unknown): void {

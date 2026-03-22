@@ -11,15 +11,38 @@ export interface ComposeInputOptions {
 
 export function buildTools(): unknown[] {
   const tools: unknown[] = [];
+  const apifyToken = appConfig.apifyMcpToken?.trim();
 
   for (const server of appConfig.mcpServers) {
-    tools.push({
+    const headers: Record<string, string> = { ...(server.headers ?? {}) };
+    if (
+      server.label.toLowerCase() === "apify" &&
+      apifyToken &&
+      !server.authorization &&
+      !headers.Authorization
+    ) {
+      headers.Authorization = `Bearer ${apifyToken}`;
+    }
+
+    const mcpTool: Record<string, unknown> = {
       type: "mcp",
       server_label: server.label,
       server_url: server.url,
       server_description: server.description ?? `MCP tools from ${server.label}`,
       require_approval: server.requireApproval ?? "always",
-    });
+    };
+
+    if (server.authorization) {
+      mcpTool.authorization = server.authorization;
+    }
+    if (Object.keys(headers).length > 0) {
+      mcpTool.headers = headers;
+    }
+    if (server.allowedTools && server.allowedTools.length > 0) {
+      mcpTool.allowed_tools = server.allowedTools;
+    }
+
+    tools.push(mcpTool);
   }
 
   if (appConfig.enableWebSearch) {

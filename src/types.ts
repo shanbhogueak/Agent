@@ -7,6 +7,9 @@ export interface McpServerConfig {
   requireApproval?: ApprovalMode;
   transport?: "http" | "sse";
   timeoutSeconds?: number;
+  authorization?: string;
+  headers?: Record<string, string>;
+  allowedTools?: string[];
 }
 
 export interface SkillRefConfig {
@@ -33,6 +36,7 @@ export interface AppConfig {
   memoryMaxContextEntries: number;
   redisUrl?: string;
   postgresUrl?: string;
+  apifyMcpToken?: string;
   mcpServers: McpServerConfig[];
   mcpSkippedServers: McpSkippedServer[];
   skillRefs: SkillRefConfig[];

@@ -16,6 +16,9 @@ const mcpServerSchema: z.ZodType<McpServerConfig> = z.object({
   requireApproval: z.enum(["always", "never"]).optional(),
   transport: z.enum(["http", "sse"]).optional(),
   timeoutSeconds: z.number().positive().optional(),
+  authorization: z.string().optional(),
+  headers: z.record(z.string(), z.string()).optional(),
+  allowedTools: z.array(z.string().min(1)).optional(),
 });
 
 const mcpServerFileEntrySchema = z.object({
@@ -27,6 +30,10 @@ const mcpServerFileEntrySchema = z.object({
   description: z.string().optional(),
   require_approval: z.enum(["always", "never"]).optional(),
   requireApproval: z.enum(["always", "never"]).optional(),
+  authorization: z.string().optional(),
+  headers: z.record(z.string(), z.string()).optional(),
+  allowed_tools: z.array(z.string().min(1)).optional(),
+  allowedTools: z.array(z.string().min(1)).optional(),
 });
 
 const mcpConfigFileSchema = z.object({
@@ -59,6 +66,7 @@ const envSchema = z.object({
   MEMORY_MAX_CONTEXT_ENTRIES: z.coerce.number().int().positive().default(20),
   REDIS_URL: z.string().optional(),
   POSTGRES_URL: z.string().optional(),
+  APIFY_MCP_TOKEN: z.string().optional(),
 });
 
 function parseJsonArray<T>(name: string, value: string, itemSchema: z.ZodType<T>): T[] {
@@ -111,6 +119,9 @@ function loadMcpConfigFile(configPath: string): {
         requireApproval: entry.requireApproval ?? entry.require_approval,
         transport: entry.transport,
         timeoutSeconds: entry.timeout_seconds,
+        authorization: entry.authorization,
+        headers: entry.headers,
+        allowedTools: entry.allowedTools ?? entry.allowed_tools,
       });
       continue;
     }
@@ -161,6 +172,7 @@ export const appConfig: AppConfig = {
   memoryMaxContextEntries: env.MEMORY_MAX_CONTEXT_ENTRIES,
   redisUrl: env.REDIS_URL,
   postgresUrl: env.POSTGRES_URL,
+  apifyMcpToken: env.APIFY_MCP_TOKEN,
   mcpServers: mergeMcpServers(envMcpServers, fileMcp.servers),
   mcpSkippedServers: fileMcp.skipped,
   skillRefs: parseJsonArray("SKILL_REFS_JSON", env.SKILL_REFS_JSON, skillRefSchema),

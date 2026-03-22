@@ -12,11 +12,6 @@
       "url": "https://mcp.apify.com",
       "transport": "http",
       "timeout_seconds": 90.0
-    },
-    "DU_MCP": {
-      "url": "http://127.0.0.1:10021/mcp",
-      "transport": "http",
-      "timeout_seconds": 90.0
     }
   }
 }

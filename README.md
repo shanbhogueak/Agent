@@ -177,13 +177,18 @@ You can configure MCP in either format.
     "apify": {
       "url": "https://mcp.apify.com",
       "transport": "http",
-      "timeout_seconds": 90
+      "timeout_seconds": 90,
+      "headers": {
+        "Authorization": "Bearer <APIFY_TOKEN>"
+      }
     }
   }
 }
 ```
 
 Important: command-based MCP entries (for example `"command": "npx"`) are detected but skipped for OpenAI MCP tool attachment. Expose those through an HTTP/SSE MCP gateway URL, then configure that URL.
+
+For Apify specifically, you can also set `APIFY_MCP_TOKEN` in `.env` and the service will inject `Authorization: Bearer <token>` automatically for MCP server label `apify`.
 
 ## API Endpoints Exposed by Backend
 
@@ -212,6 +217,13 @@ If async never completes:
 1. Use `GET /v1/chat/status/:responseId` from Inspect tab or curl
 2. Verify OpenAI API key/model settings
 3. For webhook mode, set `OPENAI_WEBHOOK_SECRET` and public webhook routing
+
+If MCP tool listing fails with `401 Unauthorized`:
+
+1. Set `APIFY_MCP_TOKEN` in `.env` and restart `npm run dev`
+2. Or provide MCP auth directly in `mcp.config.json` via `authorization` or `headers`
+3. Check `GET /v1/mcp/servers` to confirm auth is present (`hasAuthorization` / `headerKeys`)
+4. Chat endpoints automatically retry once without MCP tools and return a warning, so core chat can continue while MCP auth is fixed
 
 ## Validation Commands
 
