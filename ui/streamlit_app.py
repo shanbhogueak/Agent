@@ -15,8 +15,7 @@ def main() -> None:
     inject_styles()
     init_state()
 
-    st.title("Agent Console")
-    st.caption("Streamlit interface for the MCP + Skills agent service")
+    render_brand_overview()
 
     sidebar = st.sidebar
     sidebar.header("Connection")
@@ -104,6 +103,50 @@ def main() -> None:
 
     with tabs[3]:
         render_inspect_tab(base_url=base_url, timeout_seconds=timeout_seconds)
+
+
+def render_brand_overview() -> None:
+    st.markdown(
+        """
+        <section class="brand-shell">
+          <div class="brand-eyebrow">MCP + Skills Agent Platform</div>
+          <h1 class="brand-title">Agent operations are often fragmented.</h1>
+          <p class="brand-subtitle">
+            This console gives one workspace for chat, orchestration, memory, and runtime inspection.
+          </p>
+          <div class="pain-grid">
+            <article class="pain-card">
+              <div class="pain-card-top"></div>
+              <h3>Suboptimal</h3>
+              <p>manual setup causes inconsistent outcomes across sessions</p>
+            </article>
+            <article class="pain-card">
+              <div class="pain-card-top"></div>
+              <h3>Unscalable</h3>
+              <p>single-step prompting does not scale to complex execution chains</p>
+            </article>
+            <article class="pain-card">
+              <div class="pain-card-top"></div>
+              <h3>Inflexible</h3>
+              <p>without memory and tools, adapting to changing tasks is slow</p>
+            </article>
+          </div>
+          <div class="impact-grid">
+            <article class="impact-card">
+              <div class="impact-accent"></div>
+              <h4>3 Modes</h4>
+              <p>stream, sync, and async chat execution from one UI</p>
+            </article>
+            <article class="impact-card">
+              <div class="impact-accent"></div>
+              <h4>4 Tabs</h4>
+              <p>Chat, Chain, Memory, and Inspect for full operational visibility</p>
+            </article>
+          </div>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_chat_tab(
@@ -506,18 +549,247 @@ def inject_styles() -> None:
     st.markdown(
         """
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap');
-          html, body, [class*="css"]  {
+          @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap');
+
+          :root {
+            --brand-blue: #0b4ea2;
+            --brand-blue-deep: #083b7b;
+            --accent-pink: #e6007e;
+            --ink: #1f1f27;
+            --muted: #4f5361;
+            --surface-soft: #eceef2;
+            --surface-card: #f2f3f5;
+            --line: #d8dbe2;
+          }
+
+          html, body, [class*="css"] {
             font-family: 'Manrope', sans-serif;
           }
+
           .stApp {
-            background: linear-gradient(120deg, #f8fafc 0%, #eef2ff 45%, #ecfeff 100%);
+            color: var(--ink);
+            background:
+              radial-gradient(circle at 4% 12%, rgba(11, 78, 162, 0.08) 0, rgba(11, 78, 162, 0) 28%),
+              radial-gradient(circle at 92% 92%, rgba(230, 0, 126, 0.08) 0, rgba(230, 0, 126, 0) 26%),
+              linear-gradient(180deg, #f8f9fb 0%, #edeff3 100%);
           }
+
+          .block-container {
+            max-width: 1240px;
+            padding-top: 2rem;
+            padding-bottom: 2.5rem;
+          }
+
           section[data-testid="stSidebar"] {
-            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+            background: linear-gradient(180deg, #ffffff 0%, #f4f6fa 100%);
+            border-right: 1px solid var(--line);
           }
+
           section[data-testid="stSidebar"] * {
-            color: #e2e8f0;
+            color: var(--ink);
+          }
+
+          section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3 {
+            color: var(--brand-blue-deep);
+            font-weight: 800;
+          }
+
+          section[data-testid="stSidebar"] [data-testid="stTextInput"] label,
+          section[data-testid="stSidebar"] [data-testid="stTextArea"] label,
+          section[data-testid="stSidebar"] [data-testid="stNumberInput"] label,
+          section[data-testid="stSidebar"] [data-testid="stRadio"] label {
+            color: var(--muted);
+            font-weight: 600;
+          }
+
+          div[data-baseweb="input"] input,
+          div[data-baseweb="textarea"] textarea {
+            border-radius: 10px;
+            border: 1px solid var(--line);
+          }
+
+          div[data-baseweb="input"] input:focus,
+          div[data-baseweb="textarea"] textarea:focus {
+            border-color: var(--brand-blue);
+            box-shadow: 0 0 0 1px var(--brand-blue);
+          }
+
+          .stButton > button, .stDownloadButton > button, [data-testid="baseButton-secondary"] {
+            border-radius: 10px;
+            border: 1px solid var(--brand-blue);
+            background: var(--brand-blue);
+            color: #ffffff;
+            font-weight: 700;
+            transition: all 0.2s ease;
+          }
+
+          .stButton > button:hover, .stDownloadButton > button:hover, [data-testid="baseButton-secondary"]:hover {
+            background: var(--brand-blue-deep);
+            border-color: var(--brand-blue-deep);
+            transform: translateY(-1px);
+          }
+
+          [data-testid="stTabs"] button {
+            color: var(--muted);
+            font-weight: 700;
+          }
+
+          [data-testid="stTabs"] button[aria-selected="true"] {
+            color: var(--brand-blue);
+          }
+
+          [data-testid="stTabs"] div[role="tablist"] {
+            gap: 0.8rem;
+          }
+
+          [data-testid="stTabs"] div[role="tablist"] button {
+            border-bottom: 3px solid transparent;
+            border-radius: 0;
+            padding-bottom: 0.4rem;
+          }
+
+          [data-testid="stTabs"] div[role="tablist"] button[aria-selected="true"] {
+            border-bottom-color: var(--accent-pink);
+          }
+
+          [data-testid="stChatMessage"] {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: #ffffff;
+          }
+
+          .brand-shell {
+            margin-bottom: 1.3rem;
+            animation: fade-up 0.45s ease both;
+          }
+
+          .brand-eyebrow {
+            color: var(--brand-blue);
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            font-size: 0.82rem;
+          }
+
+          .brand-title {
+            margin: 0.6rem 0 0.8rem 0;
+            color: var(--ink);
+            font-size: clamp(1.9rem, 4vw, 3rem);
+            font-weight: 800;
+            line-height: 1.1;
+          }
+
+          .brand-subtitle {
+            max-width: 850px;
+            margin: 0 0 1.35rem 0;
+            color: var(--muted);
+            font-size: 1.05rem;
+          }
+
+          .pain-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+          }
+
+          .pain-card {
+            position: relative;
+            background: var(--surface-card);
+            border: 1px solid #e2e5ea;
+            padding: 1.45rem 1.35rem 1.25rem 1.35rem;
+            min-height: 180px;
+            overflow: hidden;
+          }
+
+          .pain-card-top {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 8px;
+            width: 100%;
+            background: var(--brand-blue);
+          }
+
+          .pain-card h3 {
+            margin: 1.2rem 0 0.5rem 0;
+            color: var(--brand-blue);
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1.1;
+          }
+
+          .pain-card p {
+            margin: 0;
+            color: #2f3340;
+            font-size: 1rem;
+            line-height: 1.45;
+          }
+
+          .impact-grid {
+            margin-top: 1rem;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+          }
+
+          .impact-card {
+            position: relative;
+            display: grid;
+            gap: 0.35rem;
+            background: #f6f7f9;
+            border: 1px solid #e2e5ea;
+            padding: 1.5rem 1.3rem 1.2rem 2rem;
+          }
+
+          .impact-accent {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 10px;
+            height: 100%;
+            background: var(--accent-pink);
+          }
+
+          .impact-card h4 {
+            margin: 0;
+            color: var(--brand-blue);
+            font-size: 2.2rem;
+            line-height: 1;
+            font-weight: 800;
+          }
+
+          .impact-card p {
+            margin: 0;
+            color: #2f3340;
+            font-size: 1.05rem;
+            line-height: 1.45;
+          }
+
+          [data-testid="stForm"] {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 0.75rem 1rem 1rem 1rem;
+            background: #ffffff;
+          }
+
+          @keyframes fade-up {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+
+          @media (max-width: 980px) {
+            .pain-grid {
+              grid-template-columns: 1fr;
+            }
+
+            .impact-grid {
+              grid-template-columns: 1fr;
+            }
+
+            .brand-title {
+              font-size: clamp(1.7rem, 8vw, 2.4rem);
+            }
           }
         </style>
         """,
