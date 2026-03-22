@@ -69,7 +69,11 @@ interface AgentCardPayload {
 }
 
 app.get("/healthz", (_req, res) => {
-  res.status(200).json({ ok: true, memoryBackend: memoryStore.kind });
+  res.status(200).json({
+    ok: true,
+    memoryBackend: memoryStore.kind,
+    llmProvider: appConfig.openaiProvider,
+  });
 });
 
 app.get("/v1/mcp/servers", (_req, res) => {
@@ -898,6 +902,7 @@ async function startServer(): Promise<void> {
   app.listen(appConfig.port, () => {
     console.log(`Agent service listening on http://localhost:${appConfig.port}`);
     console.log(`Memory backend: ${memoryStore.kind}`);
+    console.log(`LLM provider: ${appConfig.openaiProvider}`);
 
     if (appConfig.mcpServers.length > 0) {
       console.log(

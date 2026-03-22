@@ -60,7 +60,9 @@ Config is loaded via `dotenv` then validated with Zod.
 
 `envSchema` validates:
 
-- OpenAI config (`OPENAI_API_KEY`, `OPENAI_MODEL`, webhook secret)
+- Provider selection (`OPENAI_PROVIDER=openai|azure`)
+- OpenAI config (`OPENAI_API_KEY`, optional `OPENAI_BASE_URL`, `OPENAI_MODEL`, webhook secret)
+- Azure OpenAI config (`AZURE_OPENAI_API_KEY`, endpoint/base URL, API version, optional deployment, `OPENAI_MODEL`)
 - service config (`PORT`)
 - MCP config (`MCP_SERVERS_JSON`, `MCP_CONFIG_PATH`)
 - skill refs (`SKILL_REFS_JSON`)

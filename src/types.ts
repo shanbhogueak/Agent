@@ -24,9 +24,16 @@ export interface McpSkippedServer {
 
 export interface AppConfig {
   port: number;
-  openaiApiKey: string;
+  openaiProvider: "openai" | "azure";
+  openaiApiKey?: string;
+  openaiBaseUrl?: string;
   openaiModel: string;
   openaiWebhookSecret?: string;
+  azureOpenaiApiKey?: string;
+  azureOpenaiEndpoint?: string;
+  azureOpenaiBaseUrl?: string;
+  azureOpenaiApiVersion?: string;
+  azureOpenaiDeployment?: string;
   enableWebSearch: boolean;
   mcpConfigPath?: string;
   agentContextPathCandidates: string[];

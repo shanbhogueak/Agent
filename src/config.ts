@@ -45,10 +45,34 @@ const skillRefSchema: z.ZodType<SkillRefConfig> = z.object({
   version: z.union([z.literal("latest"), z.number().int().positive()]).optional(),
 });
 
+const optionalTrimmedString = z.preprocess((value) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}, z.string().optional());
+
+const optionalUrlString = z.preprocess((value) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}, z.string().url().optional());
+
 const envSchema = z.object({
-  OPENAI_API_KEY: z.string().min(1),
+  OPENAI_PROVIDER: z.enum(["openai", "azure"]).default("openai"),
+  OPENAI_API_KEY: optionalTrimmedString,
+  OPENAI_BASE_URL: optionalUrlString,
   OPENAI_MODEL: z.string().default("gpt-5.4"),
-  OPENAI_WEBHOOK_SECRET: z.string().optional(),
+  OPENAI_WEBHOOK_SECRET: optionalTrimmedString,
+  AZURE_OPENAI_API_KEY: optionalTrimmedString,
+  AZURE_OPENAI_ENDPOINT: optionalUrlString,
+  AZURE_OPENAI_BASE_URL: optionalUrlString,
+  AZURE_OPENAI_API_VERSION: optionalTrimmedString,
+  OPENAI_API_VERSION: optionalTrimmedString,
+  AZURE_OPENAI_DEPLOYMENT: optionalTrimmedString,
   PORT: z.coerce.number().int().positive().default(8080),
   MCP_SERVERS_JSON: z.string().default("[]"),
   MCP_CONFIG_PATH: z.string().default("./mcp.config.json"),
@@ -155,14 +179,22 @@ function mergeMcpServers(...serverLists: McpServerConfig[][]): McpServerConfig[]
 }
 
 const env = envSchema.parse(process.env);
+validateLlmProviderConfig(env);
 const envMcpServers = parseJsonArray("MCP_SERVERS_JSON", env.MCP_SERVERS_JSON, mcpServerSchema);
 const fileMcp = loadMcpConfigFile(env.MCP_CONFIG_PATH);
 
 export const appConfig: AppConfig = {
   port: env.PORT,
+  openaiProvider: env.OPENAI_PROVIDER,
   openaiApiKey: env.OPENAI_API_KEY,
+  openaiBaseUrl: env.OPENAI_BASE_URL,
   openaiModel: env.OPENAI_MODEL,
   openaiWebhookSecret: env.OPENAI_WEBHOOK_SECRET,
+  azureOpenaiApiKey: env.AZURE_OPENAI_API_KEY,
+  azureOpenaiEndpoint: env.AZURE_OPENAI_ENDPOINT,
+  azureOpenaiBaseUrl: env.AZURE_OPENAI_BASE_URL,
+  azureOpenaiApiVersion: env.AZURE_OPENAI_API_VERSION ?? env.OPENAI_API_VERSION,
+  azureOpenaiDeployment: env.AZURE_OPENAI_DEPLOYMENT,
   enableWebSearch: env.ENABLE_WEB_SEARCH,
   mcpConfigPath: env.MCP_CONFIG_PATH,
   agentContextPathCandidates: parseCommaList(env.AGENT_CONTEXT_PATHS),
@@ -177,3 +209,28 @@ export const appConfig: AppConfig = {
   mcpSkippedServers: fileMcp.skipped,
   skillRefs: parseJsonArray("SKILL_REFS_JSON", env.SKILL_REFS_JSON, skillRefSchema),
 };
+
+function validateLlmProviderConfig(env: z.infer<typeof envSchema>): void {
+  if (env.OPENAI_PROVIDER === "openai") {
+    if (!env.OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY is required when OPENAI_PROVIDER=openai.");
+    }
+    return;
+  }
+
+  if (!env.AZURE_OPENAI_API_KEY) {
+    throw new Error("AZURE_OPENAI_API_KEY is required when OPENAI_PROVIDER=azure.");
+  }
+
+  if (!env.AZURE_OPENAI_ENDPOINT && !env.AZURE_OPENAI_BASE_URL) {
+    throw new Error(
+      "Set one of AZURE_OPENAI_ENDPOINT or AZURE_OPENAI_BASE_URL when OPENAI_PROVIDER=azure.",
+    );
+  }
+
+  if (!env.AZURE_OPENAI_API_VERSION && !env.OPENAI_API_VERSION) {
+    throw new Error(
+      "Set AZURE_OPENAI_API_VERSION (or OPENAI_API_VERSION) when OPENAI_PROVIDER=azure.",
+    );
+  }
+}

@@ -64,9 +64,19 @@ cp .env.example .env
 
 Edit `.env` and set at least:
 
-- `OPENAI_API_KEY`
-- `OPENAI_MODEL` (default `gpt-5.4`)
+- `OPENAI_PROVIDER` (`openai` or `azure`)
+- `OPENAI_MODEL` (OpenAI model name, or Azure deployment/model name)
 - MCP settings (`MCP_CONFIG_PATH` and/or `MCP_SERVERS_JSON`)
+
+If `OPENAI_PROVIDER=openai`, set:
+
+- `OPENAI_API_KEY`
+
+If `OPENAI_PROVIDER=azure`, set:
+
+- `AZURE_OPENAI_API_KEY`
+- one of `AZURE_OPENAI_ENDPOINT` or `AZURE_OPENAI_BASE_URL`
+- `AZURE_OPENAI_API_VERSION` (or `OPENAI_API_VERSION`)
 
 Start backend:
 
@@ -227,7 +237,7 @@ If Streamlit cannot connect:
 If async never completes:
 
 1. Use `GET /v1/chat/status/:responseId` from Inspect tab or curl
-2. Verify OpenAI API key/model settings
+2. Verify provider-specific credentials/model settings (`OPENAI_PROVIDER`, key, model/deployment, API version for Azure)
 3. For webhook mode, set `OPENAI_WEBHOOK_SECRET` and public webhook routing
 
 If MCP tool listing fails with `401 Unauthorized`:
