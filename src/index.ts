@@ -237,7 +237,7 @@ app.post("/message\\:send", async (req, res) => {
       options,
     );
     const previousResponseId =
-      normalized.previousTaskId ??
+      resolvePreviousResponseIdFromA2aTask(normalized.previousTaskId) ??
       (normalized.contextId ? sessionToLastResponseId.get(normalized.contextId) : undefined);
 
     const background = payload.configuration?.blocking === false;
@@ -307,7 +307,7 @@ app.post("/message\\:stream", async (req, res) => {
       options,
     );
     const previousResponseId =
-      normalized.previousTaskId ??
+      resolvePreviousResponseIdFromA2aTask(normalized.previousTaskId) ??
       (normalized.contextId ? sessionToLastResponseId.get(normalized.contextId) : undefined);
 
     upsertA2aTaskRecord({
@@ -1115,6 +1115,23 @@ function normalizeSkillNames(value: unknown): string[] | undefined {
       .map((item) => item.trim())
       .filter(Boolean);
     return names.length > 0 ? names : undefined;
+  }
+
+  return undefined;
+}
+
+function resolvePreviousResponseIdFromA2aTask(taskId?: string): string | undefined {
+  if (!taskId || taskId.trim().length === 0) {
+    return undefined;
+  }
+
+  const maybeRecord = a2aTaskRecords.get(taskId);
+  if (maybeRecord?.responseId) {
+    return maybeRecord.responseId;
+  }
+
+  if (taskId.startsWith("resp_")) {
+    return taskId;
   }
 
   return undefined;
