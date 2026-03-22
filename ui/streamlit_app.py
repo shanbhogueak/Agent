@@ -109,11 +109,21 @@ def render_brand_overview() -> None:
     st.markdown(
         """
         <section class="brand-shell">
-          <div class="brand-eyebrow">MCP + Skills Agent Platform</div>
+          <nav class="brand-nav">
+            <div class="brand-logo"><span class="brand-logo-accent"></span>AgentWorks</div>
+            <div class="brand-links">
+              <span>Who We Serve</span>
+              <span>What We Do</span>
+              <span>How We Deliver</span>
+              <span>What We Think</span>
+            </div>
+          </nav>
+          <div class="brand-eyebrow">MCP + SKILLS AGENT PLATFORM</div>
           <h1 class="brand-title">Agent operations are often fragmented.</h1>
           <p class="brand-subtitle">
-            This console gives one workspace for chat, orchestration, memory, and runtime inspection.
+            One workspace for conversational execution, memory, tooling, and runtime inspection.
           </p>
+
           <div class="pain-grid">
             <article class="pain-card">
               <div class="pain-card-top"></div>
@@ -131,6 +141,7 @@ def render_brand_overview() -> None:
               <p>without memory and tools, adapting to changing tasks is slow</p>
             </article>
           </div>
+
           <div class="impact-grid">
             <article class="impact-card">
               <div class="impact-accent"></div>
@@ -140,7 +151,7 @@ def render_brand_overview() -> None:
             <article class="impact-card">
               <div class="impact-accent"></div>
               <h4>4 Tabs</h4>
-              <p>Chat, Chain, Memory, and Inspect for full operational visibility</p>
+              <p>Chat, Chain, Memory, and Inspect for operational visibility</p>
             </article>
           </div>
         </section>
@@ -549,69 +560,89 @@ def inject_styles() -> None:
     st.markdown(
         """
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
 
           :root {
             --brand-blue: #0b4ea2;
-            --brand-blue-deep: #083b7b;
+            --brand-blue-deep: #083978;
             --accent-pink: #e6007e;
-            --ink: #1f1f27;
-            --muted: #4f5361;
-            --surface-soft: #eceef2;
-            --surface-card: #f2f3f5;
-            --line: #d8dbe2;
+            --ink: #1f2430;
+            --muted: #4d5565;
+            --page: #f2f3f6;
+            --panel: #f7f8fa;
+            --card: #eceef2;
+            --line: #d7dce5;
+          }
+
+          [data-testid="stHeader"] {
+            display: none;
+          }
+
+          [data-testid="stToolbar"], #MainMenu, footer {
+            visibility: hidden;
+            height: 0;
           }
 
           html, body, [class*="css"] {
-            font-family: 'Manrope', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--ink);
           }
 
           .stApp {
-            color: var(--ink);
-            background:
-              radial-gradient(circle at 4% 12%, rgba(11, 78, 162, 0.08) 0, rgba(11, 78, 162, 0) 28%),
-              radial-gradient(circle at 92% 92%, rgba(230, 0, 126, 0.08) 0, rgba(230, 0, 126, 0) 26%),
-              linear-gradient(180deg, #f8f9fb 0%, #edeff3 100%);
+            background: var(--page);
           }
 
           .block-container {
-            max-width: 1240px;
-            padding-top: 2rem;
-            padding-bottom: 2.5rem;
+            max-width: 1260px;
+            padding-top: 0.8rem;
+            padding-bottom: 2rem;
           }
 
           section[data-testid="stSidebar"] {
-            background: linear-gradient(180deg, #ffffff 0%, #f4f6fa 100%);
+            background: var(--panel);
             border-right: 1px solid var(--line);
           }
 
-          section[data-testid="stSidebar"] * {
-            color: var(--ink);
+          section[data-testid="stSidebar"] .block-container {
+            padding-top: 1.4rem;
           }
 
           section[data-testid="stSidebar"] h2, section[data-testid="stSidebar"] h3 {
             color: var(--brand-blue-deep);
             font-weight: 800;
+            letter-spacing: -0.01em;
           }
 
-          section[data-testid="stSidebar"] [data-testid="stTextInput"] label,
-          section[data-testid="stSidebar"] [data-testid="stTextArea"] label,
-          section[data-testid="stSidebar"] [data-testid="stNumberInput"] label,
-          section[data-testid="stSidebar"] [data-testid="stRadio"] label {
+          section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] label {
             color: var(--muted);
-            font-weight: 600;
+          }
+
+          div[data-baseweb="input"] > div,
+          div[data-baseweb="textarea"] > div,
+          div[data-baseweb="select"] > div {
+            background: #ffffff !important;
+            border: 1px solid var(--line) !important;
+            border-radius: 10px !important;
+            box-shadow: none !important;
           }
 
           div[data-baseweb="input"] input,
           div[data-baseweb="textarea"] textarea {
-            border-radius: 10px;
-            border: 1px solid var(--line);
+            background: transparent !important;
+            color: var(--ink) !important;
+            -webkit-text-fill-color: var(--ink) !important;
           }
 
-          div[data-baseweb="input"] input:focus,
-          div[data-baseweb="textarea"] textarea:focus {
-            border-color: var(--brand-blue);
-            box-shadow: 0 0 0 1px var(--brand-blue);
+          div[data-baseweb="input"] input::placeholder,
+          div[data-baseweb="textarea"] textarea::placeholder {
+            color: #8a90a0 !important;
+            -webkit-text-fill-color: #8a90a0 !important;
+          }
+
+          section[data-testid="stSidebar"] [data-testid="stNumberInput"] button {
+            background: #ffffff !important;
+            color: var(--brand-blue) !important;
+            border: 1px solid var(--line) !important;
           }
 
           .stButton > button, .stDownloadButton > button, [data-testid="baseButton-secondary"] {
@@ -620,7 +651,7 @@ def inject_styles() -> None:
             background: var(--brand-blue);
             color: #ffffff;
             font-weight: 700;
-            transition: all 0.2s ease;
+            transition: background 0.18s ease, transform 0.18s ease;
           }
 
           .stButton > button:hover, .stDownloadButton > button:hover, [data-testid="baseButton-secondary"]:hover {
@@ -629,123 +660,183 @@ def inject_styles() -> None:
             transform: translateY(-1px);
           }
 
-          [data-testid="stTabs"] button {
-            color: var(--muted);
-            font-weight: 700;
-          }
-
-          [data-testid="stTabs"] button[aria-selected="true"] {
-            color: var(--brand-blue);
-          }
-
           [data-testid="stTabs"] div[role="tablist"] {
             gap: 0.8rem;
+            margin-top: 0.25rem;
           }
 
           [data-testid="stTabs"] div[role="tablist"] button {
+            color: #5d6679;
+            font-weight: 700;
             border-bottom: 3px solid transparent;
             border-radius: 0;
-            padding-bottom: 0.4rem;
+            padding: 0.2rem 0.15rem 0.45rem 0.15rem;
           }
 
           [data-testid="stTabs"] div[role="tablist"] button[aria-selected="true"] {
+            color: var(--brand-blue);
             border-bottom-color: var(--accent-pink);
           }
 
-          [data-testid="stChatMessage"] {
+          [data-testid="stForm"] {
             border: 1px solid var(--line);
             border-radius: 12px;
+            padding: 0.85rem 1rem 1rem 1rem;
             background: #ffffff;
           }
 
+          [data-testid="stChatMessage"] {
+            background: #ffffff;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+          }
+
+          [data-testid="stChatInput"] {
+            background: #ffffff !important;
+            border: 1px solid var(--line) !important;
+            border-radius: 14px !important;
+            padding: 0.25rem 0.45rem !important;
+          }
+
+          [data-testid="stChatInput"] input,
+          [data-testid="stChatInput"] textarea {
+            background: transparent !important;
+            color: var(--ink) !important;
+            -webkit-text-fill-color: var(--ink) !important;
+          }
+
+          [data-testid="stChatInput"] button {
+            background: var(--brand-blue) !important;
+            color: #ffffff !important;
+            border-radius: 10px !important;
+            border: none !important;
+          }
+
           .brand-shell {
-            margin-bottom: 1.3rem;
-            animation: fade-up 0.45s ease both;
+            background: #f6f7f9;
+            border: 1px solid #e0e4eb;
+            padding: 0 1.5rem 1.35rem 1.5rem;
+            margin: 0.2rem 0 1.3rem 0;
+          }
+
+          .brand-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--line);
+            padding: 0.95rem 0;
+            margin-bottom: 0.9rem;
+          }
+
+          .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            color: var(--brand-blue);
+            font-size: 1.85rem;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.02em;
+          }
+
+          .brand-logo-accent {
+            display: inline-block;
+            width: 9px;
+            height: 34px;
+            background: linear-gradient(180deg, var(--accent-pink) 0%, #7d2ab8 100%);
+          }
+
+          .brand-links {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            color: #394258;
+            font-size: 1rem;
+            font-weight: 600;
           }
 
           .brand-eyebrow {
             color: var(--brand-blue);
+            font-size: 0.8rem;
             font-weight: 800;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
-            font-size: 0.82rem;
+            margin-bottom: 0.5rem;
           }
 
           .brand-title {
-            margin: 0.6rem 0 0.8rem 0;
+            margin: 0;
             color: var(--ink);
-            font-size: clamp(1.9rem, 4vw, 3rem);
+            font-size: clamp(1.95rem, 4vw, 3.2rem);
             font-weight: 800;
-            line-height: 1.1;
+            letter-spacing: -0.02em;
+            line-height: 1.08;
           }
 
           .brand-subtitle {
-            max-width: 850px;
-            margin: 0 0 1.35rem 0;
+            margin: 0.95rem 0 1.25rem 0;
             color: var(--muted);
-            font-size: 1.05rem;
+            font-size: 1.08rem;
+            line-height: 1.5;
+            max-width: 820px;
           }
 
           .pain-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
+            gap: 0.95rem;
+            margin-bottom: 0.95rem;
           }
 
           .pain-card {
             position: relative;
-            background: var(--surface-card);
-            border: 1px solid #e2e5ea;
-            padding: 1.45rem 1.35rem 1.25rem 1.35rem;
-            min-height: 180px;
-            overflow: hidden;
+            background: var(--card);
+            border: 1px solid var(--line);
+            padding: 1.45rem 1.3rem 1.25rem 1.3rem;
+            min-height: 190px;
           }
 
           .pain-card-top {
             position: absolute;
-            left: 0;
             top: 0;
-            height: 8px;
+            left: 0;
             width: 100%;
+            height: 8px;
             background: var(--brand-blue);
           }
 
           .pain-card h3 {
-            margin: 1.2rem 0 0.5rem 0;
+            margin: 1rem 0 0.55rem 0;
             color: var(--brand-blue);
-            font-size: 2rem;
+            font-size: 2.05rem;
             font-weight: 800;
-            line-height: 1.1;
+            letter-spacing: -0.01em;
           }
 
           .pain-card p {
             margin: 0;
-            color: #2f3340;
-            font-size: 1rem;
+            color: #2b3140;
+            font-size: 1.02rem;
             line-height: 1.45;
           }
 
           .impact-grid {
-            margin-top: 1rem;
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 1rem;
+            gap: 0.95rem;
           }
 
           .impact-card {
             position: relative;
-            display: grid;
-            gap: 0.35rem;
-            background: #f6f7f9;
-            border: 1px solid #e2e5ea;
-            padding: 1.5rem 1.3rem 1.2rem 2rem;
+            background: #f1f3f7;
+            border: 1px solid var(--line);
+            padding: 1.4rem 1.3rem 1.2rem 2rem;
           }
 
           .impact-accent {
             position: absolute;
-            left: 0;
             top: 0;
+            left: 0;
             width: 10px;
             height: 100%;
             background: var(--accent-pink);
@@ -754,41 +845,39 @@ def inject_styles() -> None:
           .impact-card h4 {
             margin: 0;
             color: var(--brand-blue);
-            font-size: 2.2rem;
-            line-height: 1;
+            font-size: 2.45rem;
             font-weight: 800;
+            letter-spacing: -0.01em;
           }
 
           .impact-card p {
-            margin: 0;
-            color: #2f3340;
-            font-size: 1.05rem;
-            line-height: 1.45;
+            margin: 0.45rem 0 0 0;
+            color: #2b3140;
+            font-size: 1.04rem;
+            line-height: 1.42;
           }
 
-          [data-testid="stForm"] {
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            padding: 0.75rem 1rem 1rem 1rem;
-            background: #ffffff;
-          }
-
-          @keyframes fade-up {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+          @media (max-width: 1160px) {
+            .brand-links {
+              display: none;
+            }
           }
 
           @media (max-width: 980px) {
-            .pain-grid {
+            .brand-shell {
+              padding: 0 1rem 1rem 1rem;
+            }
+
+            .pain-grid, .impact-grid {
               grid-template-columns: 1fr;
             }
 
-            .impact-grid {
-              grid-template-columns: 1fr;
+            .pain-card {
+              min-height: auto;
             }
 
             .brand-title {
-              font-size: clamp(1.7rem, 8vw, 2.4rem);
+              font-size: clamp(1.6rem, 8vw, 2.35rem);
             }
           }
         </style>
